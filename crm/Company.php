@@ -30,21 +30,39 @@ class Company
         $this->email = $email;
     }
 
-    public function save(){
+    /**
+     * jei nera id vykdo naujos kompanijos pridejima,
+     * jei id yra vykdo esamos kompanijos atnaujinima-pakeitima.
+     */
+
+    public function saveCompany(){
+        $pdo=DB::getPDO();
+        if ($this->id==null){
+            $stm=$pdo->prepare("INSERT INTO companys (name, address, vat_code, company_name,phone, email) VALUES (?,?, ?, ?, ?,?)");
+            $stm->execute([$this->name, $this->address, $this->vat_code, $this->company_name, $this->phone, $this->email]);
+            $this->id=$pdo->lastInsertId();
+        }else{
+            $stm=$pdo->prepare("UPDATE companys SET name=?, address=?, vat_code=?, company_name=?, phone=?, email=? WHERE id=?");
+            $stm->execute([$this->name, $this->address, $this->vat_code, $this->company_name, $this->phone, $this->email, $this->id]);
+        }
+
+    }
+
+    /*public function save(){
         $pdo=DB::getPDO();
         $stm=$pdo->prepare("UPDATE companys SET name=?, address=?, vat_code=?, company_name=?, phone=?, email=? WHERE id=?");
         $stm->execute([$this->name, $this->address, $this->vat_code, $this->company_name, $this->phone, $this->email, $this->id]);
-    }
+    }*/
 
-    public function delete(){
+    public function deleteCompany(){
         $pdo=DB::getPDO();
         $stm=$pdo->prepare("DELETE FROM companys WHERE id=?");
         $stm->execute([ $this->id ]);}
 
-    public function insert($name, $address, $vat_code, $company_name,$phone, $email){
+    /*public static function insert($name, $address, $vat_code, $company_name,$phone, $email){
         $pdo=DB::getPDO();
         $stm=$pdo->prepare("INSERT INTO companys (name, address, vat_code, company_name,phone, email) VALUES (?,?, ?, ?, ?,?)");
-        $stm->execute([$name, $address, $vat_code, $company_name, $phone, $email]);}
+        $stm->execute([$name, $address, $vat_code, $company_name, $phone, $email]);}*/
 
     public static function getCompany($id){
         $pdo=DB::getPDO();
@@ -54,5 +72,24 @@ class Company
         $company=new Company($c['name'],$c['address'],$c['vat_code'],$c['company_name'],$c['phone'],$c['email'],$id);
         return $company;
     }
+
+    public static function getCompanys(){
+        $pdo=DB::getPDO();
+        $stm=$pdo->prepare("SELECT * FROM companys");
+        $stm->execute([]);
+        $companys=[];
+        foreach ($stm->fetchAll(PDO::FETCH_ASSOC) as $c){
+            $companys[]=new Company($c['name'],$c['address'],$c['vat_code'],$c['company_name'],$c['phone'],$c['email'],$c['id']);
+        }
+        return $companys;
+    }
+
+    public function getCustomers() {
+        if ($this->customers==null){
+            $this->customers=Customer::getCustomer($this->id);
+        }
+        return $this->customers;
+    }
+
 
 }
